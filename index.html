@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Lane ♡</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root{
+--paper:#fffaf0;
+--ink:#594838;
+--rose:#d88b83;
+--cream:#f5eee4;
+--brown:#987859;
+}
+
+*{box-sizing:border-box}
+body{
+margin:0;
+background:var(--cream);
+color:var(--ink);
+font-family:'DM Sans',sans-serif;
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer;transition:.2s}
+button:hover{transform:translateY(-2px)}
+.hidden{display:none!important}
+
+#editor{
+padding:25px 15px 60px;
+}
+.container{max-width:800px;margin:auto}
+.header{text-align:center;margin:20px 0 30px}
+.header .sub{
+letter-spacing:3px;
+text-transform:uppercase;
+font-size:11px;
+color:#a17f69;
+}
+.header h1{
+font-family:'Playfair Display',serif;
+font-size:50px;
+font-weight:500;
+margin:10px 0;
+}
+.header p{font-size:14px;color:#8d7968}
+
+.panel{
+background:#fffdf8;
+padding:24px;
+border-radius:22px;
+box-shadow:0 10px 35px #8d796815;
+margin-bottom:20px;
+}
+.panel h2{
+font-family:'Playfair Display',serif;
+font-size:25px;
+font-weight:500;
+margin-top:0;
+}
+.field{margin-bottom:16px}
+label{
+display:block;
+font-size:13px;
+font-weight:600;
+margin-bottom:8px;
+}
+input,textarea{
+width:100%;
+padding:13px;
+border:1px solid #eaded0;
+background:white;
+border-radius:12px;
+outline:none;
+color:var(--ink);
+}
+textarea{resize:vertical;min-height:90px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.btn{
+background:var(--rose);
+color:white;
+padding:13px 18px;
+border-radius:13px;
+font-weight:600;
+border:none;
+}
+.btn.light{background:#f5e7d7;color:var(--ink)}
+.btn.full{width:100%}
+
+.photo-box{
+border:2px dashed #e4cbbb;
+padding:15px;
+border-radius:15px;
+text-align:center;
+}
+.photo-box input{border:none}
+.photo-preview{
+width:100%;
+max-height:230px;
+object-fit:cover;
+border-radius:12px;
+margin-top:10px;
+}
+
+.memory-list{display:flex;flex-direction:column;gap:10px}
+.memory-item{
+display:flex;
+align-items:center;
+gap:12px;
+background:#faf4ea;
+padding:10px;
+border-radius:13px;
+}
+.memory-item img{
+width:65px;height:65px;
+object-fit:cover;border-radius:10px;
+}
+.memory-item .info{flex:1}
+.memory-item button{
+background:#f0d4d0;color:#8c4d4a;
+padding:9px;border-radius:10px;border:none;
+}
+.note{
+background:#fff4dc;
+padding:13px;
+border-radius:12px;
+font-size:13px;
+line-height:1.7;
+color:#836a4e;
+}
+
+/* ALBUM */
+#albumView{
+min-height:100vh;
+padding:20px 12px 50px;
+background:
+radial-gradient(circle at 20% 10%,#f9dfbf,transparent 25%),
+radial-gradient(circle at 90% 80%,#e4d7c8,transparent 30%),
+#f2e9dc;
+}
+
+.album-top{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:9px;
+max-width:900px;
+margin:0 auto 20px;
+}
+.album-top button{
+background:#fff8eb;
+color:#685440;
+padding:10px 13px;
+border-radius:12px;
+border:none;
+}
+
+.book{
+max-width:850px;
+margin:auto;
+perspective:1800px;
+perspective-origin:50% 50%;
+}
+
+.page{
+position:relative;
+background:var(--paper);
+border-radius:5px 22px 22px 5px;
+box-shadow:
+0 25px 65px #5d463320,
+0 2px 5px #6e513020;
+overflow:hidden;
+min-height:620px;
+padding:clamp(20px,5vw,45px);
+border-left:8px solid #dfc8a9;
+transform-style:preserve-3d;
+backface-visibility:hidden;
+}
+
+.page:after{
+content:"";
+position:absolute;
+top:0;bottom:0;left:12px;
+border-left:1px solid #e8d8c5;
+pointer-events:none;
+}
+
+.page-inner{max-width:700px;margin:auto}
+
+/* PAGE TURN ANIMATION */
+
+.page.turn-next{
+animation:turnNext .55s ease-in-out forwards;
+}
+.page.turn-prev{
+animation:turnPrev .55s ease-in-out forwards;
+}
+.page.arrive-next{
+animation:arriveNext .55s ease-in-out;
+}
+.page.arrive-prev{
+animation:arrivePrev .55s ease-in-out;
+}
+
+@keyframes turnNext{
+0%{transform:rotateY(0);opacity:1}
+100%{transform:rotateY(-90deg);opacity:0}
+}
+@keyframes arriveNext{
+0%{transform:rotateY(90deg);opacity:0}
+100%{transform:rotateY(0);opacity:1}
+}
+@keyframes turnPrev{
+0%{transform:rotateY(0);opacity:1}
+100%{transform:rotateY(90deg);opacity:0}
+}
+@keyframes arrivePrev{
+0%{transform:rotateY(-90deg);opacity:0}
+100%{transform:rotateY(0);opacity:1}
+}
+
+/* COVER */
+
+.cover{
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
+min-height:520px;
+background:linear-gradient(145deg,#e5c5a6,#f4e5c9 50%,#d9c2a4);
+border:9px double #ad8b69;
+border-radius:15px;
+padding:35px 20px;
+}
+.cover .stamp{
+border:1px solid #977b5b;
+border-radius:50%;
+width:95px;height:95px;
+display:grid;place-items:center;
+font-size:40px;
+margin-bottom:25px;
+}
+.cover h1{
+font-family:'Playfair Display',serif;
+font-size:clamp(40px,8vw,68px);
+font-weight:500;
+line-height:1.1;
+margin:5px 0 15px;
+}
+.cover p{
+font-family:'Playfair Display',serif;
+font-style:italic;
+font-size:20px;
+}
+.cover .to{
+font-size:13px;
+letter-spacing:2px;
+text-transform:uppercase;
+margin:20px 0;
+}
+.cover .names{
+font-family:'Playfair Display',serif;
+font-size:22px;
+}
+.openBook{
+margin-top:30px;
+padding:14px 25px;
+border:1px solid #987859;
+background:#987859;
+color:white;
+border-radius:30px;
+font-size:14px;
+}
+
+/* MEMORY */
+
+.memory-page{
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+.memory-page .date{
+font-size:12px;
+letter-spacing:2px;
+color:#b28b6b;
+text-transform:uppercase;
+margin-bottom:12px;
+}
+.memory-page h2{
+font-family:'Playfair Display',serif;
+font-size:clamp(25px,5vw,40px);
+font-weight:500;
+margin:0 0 20px;
+}
+.memory-photo{
+width:100%;
+max-height:360px;
+object-fit:contain;
+background:#f1e5d6;
+border:10px solid white;
+box-shadow:0 6px 22px #78604516;
+border-radius:5px;
+}
+.caption{
+font-family:'Playfair Display',serif;
+font-size:19px;
+font-style:italic;
+line-height:1.8;
+margin-top:25px;
+white-space:pre-wrap;
+}
+
+/* TIMELINE */
+
+.timeline-page h2{
+font-family:'Playfair Display',serif;
+text-align:center;
+font-weight:500;
+font-size:36px;
+margin:10px 0 30px;
+}
+.timeline{
+position:relative;
+margin-left:10px;
+padding-left:28px;
+border-left:2px solid #e5c7a5;
+}
+.tl-item{position:relative;margin-bottom:30px}
+.tl-item:before{
+content:"";
+position:absolute;
+left:-36px;top:5px;
+width:14px;height:14px;
+border-radius:50%;
+background:#d58d7f;
+border:4px solid #fff3e5;
+}
+.tl-date{font-size:12px;color:#b38b6a;letter-spacing:1px}
+.tl-title{
+font-family:'Playfair Display',serif;
+font-size:22px;
+margin:6px 0;
+}
+.tl-text{font-size:14px;line-height:1.8}
+
+/* END PAGE */
+
+.end-page{
+text-align:center;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+min-height:500px;
+}
+.end-page h2{
+font-family:'Playfair Display',serif;
+font-weight:500;
+font-size:40px;
+}
+.end-page p{
+font-family:'Playfair Display',serif;
+font-style:italic;
+line-height:1.9;
+font-size:20px;
+}
+
+.controls{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:14px;
+margin:20px auto;
+}
+.controls button{
+background:#fff9ee;
+color:#705b46;
+padding:13px 18px;
+border-radius:14px;
+border:none;
+font-size:15px;
+}
+#counter{font-size:13px;color:#8b7560}
+
+.music-btn{
+position:fixed;
+bottom:20px;
+right:20px;
+border-radius:50%;
+width:56px;height:56px;
+background:#d99084;
+color:white;
+font-size:22px;
+box-shadow:0 6px 20px #d9908440;
+z-index:10;
+border:none;
+}
+
+.footer{text-align:center;font-size:12px;color:#a28b76;margin-top:20px}
+
+@media(max-width:600px){
+.row{grid-template-columns:1fr}
+.panel{padding:19px}
+.page{min-height:540px;padding:22px 18px}
+.cover{min-height:480px}
+.memory-photo{max-height:280px}
+.caption{font-size:17px}
+}
+</style>
+</head>
+
+<body>
+
+<!-- EDITOR -->
+
+<section id="editor">
+<div class="container">
+
+<div class="header">
+<div class="sub">A little book of memories</div>
+<h1>Memory Lane ♡</h1>
+<p>Turn your favorite moments into a little book.</p>
+</div>
+
+<div class="panel">
+<h2>♡ The people</h2>
+
+<div class="row">
+<div class="field">
+<label>Album for</label>
+<input id="recipient" placeholder="Nama penerima...">
+</div>
+<div class="field">
+<label>Album from</label>
+<input id="sender" placeholder="Nama pengirim...">
+</div>
+</div>
+
+<div class="field">
+<label>Judul album</label>
+<input id="albumTitle" placeholder="Our little memories">
+</div>
+
+<div class="field">
+<label>Pesan di halaman terakhir</label>
+<textarea id="ending" placeholder="Terima kasih untuk setiap kenangan..."></textarea>
+</div>
+</div>
+
+<div class="panel">
+<h2>♡ Add a memory</h2>
+
+<div class="field">
+<label>Foto kenangan</label>
+<div class="photo-box">
+<input id="photo" type="file" accept="image/*">
+<img id="photoPreview" class="photo-preview hidden">
+</div>
+</div>
+
+<div class="row">
+<div class="field">
+<label>Tanggal</label>
+<input id="date" type="date">
+</div>
+<div class="field">
+<label>Judul kenangan</label>
+<input id="title" placeholder="First adventure...">
+</div>
+</div>
+
+<div class="field">
+<label>Caption / cerita</label>
+<textarea id="caption" placeholder="Ceritakan sedikit tentang momen ini..."></textarea>
+</div>
+
+<button class="btn full" id="addMemory">Add to album ♡</button>
+</div>
+
+<div class="panel">
+<h2>♡ Your memories</h2>
+<div id="memoryList" class="memory-list">
+<p style="color:#a28b76;font-size:14px">Your memories will appear here.</p>
+</div>
+</div>
+
+<div class="panel">
+<h2>♡ Make your album</h2>
+<div class="note">
+Foto dikompres otomatis agar link lebih ringan.
+Album disimpan dalam link berbagi, bukan database.
+Album dengan banyak foto bisa menghasilkan link yang panjang.
+</div>
+<br>
+<button class="btn full" id="makeAlbum">Create album ♡</button>
+</div>
+
+<div class="footer">Made with little pieces of happiness ♡</div>
+
+</div>
+</section>
+
+<!-- ALBUM -->
+
+<section id="albumView" class="hidden">
+
+<div class="album-top">
+<button id="editBtn">✎ Edit album</button>
+<button id="copyBtn">♡ Copy Link</button>
+<button id="previewBtn">↗ Preview</button>
+<button id="anotherBtn">＋ Make Another One</button>
+</div>
+
+<div class="book">
+<div class="page" id="page"></div>
+</div>
+
+<div class="controls">
+<button id="prev">← Back</button>
+<span id="counter"></span>
+<button id="next">Next →</button>
+</div>
+
+<button class="music-btn" id="music" title="Play music">♫</button>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+
+let memories=[];
+let album=null;
+let currentPage=0;
+let busy=false;
+let audioCtx=null;
+let musicPlaying=false;
+let musicTimer=null;
+let melodyStep=0;
+
+const melody=[
+392,494,587,494,392,330,392,440,
+523,587,659,587,523,440,392,330,
+349,440,523,440,349,294,349,392,
+440,523,587,523,440,392,330,392
+];
+
+const chords=[
+[196,247,294],[165,220,262],
+[175,220,262],[147,196,247]
+];
+
+$("photo").addEventListener("change",()=>{
+const f=$("photo").files[0];
+if(!f)return;
+$("photoPreview").src=URL.createObjectURL(f);
+$("photoPreview").classList.remove("hidden");
+});
+
+function compressImage(file){
+return new Promise((resolve,reject)=>{
+const img=new Image();
+const url=URL.createObjectURL(file);
+img.onload=()=>{
+let w=img.width,h=img.height;
+const max=1000;
+if(w>max||h>max){
+const scale=max/Math.max(w,h);
+w=Math.round(w*scale);
+h=Math.round(h*scale);
+}
+const canvas=document.createElement("canvas");
+canvas.width=w;canvas.height=h;
+canvas.getContext("2d").drawImage(img,0,0,w,h);
+const result=canvas.toDataURL("image/jpeg",0.68);
+URL.revokeObjectURL(url);
+resolve(result);
+};
+img.onerror=()=>reject();
+img.src=url;
+});
+}
+
+$("addMemory").onclick=async()=>{
+const f=$("photo").files[0];
+const title=$("title").value.trim();
+
+if(!f){alert("Tambahkan foto kenangan ♡");return;}
+if(!title){alert("Isi judul kenangan.");return;}
+
+const btn=$("addMemory");
+btn.disabled=true;
+btn.textContent="Adding memory...";
+
+try{
+const image=await compressImage(f);
+memories.push({
+image,
+title,
+date:$("date").value,
+caption:$("caption").value.trim()
+});
+renderMemoryList();
+
+$("photo").value="";
+$("photoPreview").src="";
+$("photoPreview").classList.add("hidden");
+$("title").value="";
+$("date").value="";
+$("caption").value="";
+}catch(e){
+alert("Foto gagal diproses.");
+}
+
+btn.disabled=false;
+btn.textContent="Add to album ♡";
+};
+
+function renderMemoryList(){
+const list=$("memoryList");
+if(!memories.length){
+list.innerHTML='<p style="color:#a28b76;font-size:14px">Your memories will appear here.</p>';
+return;
+}
+list.innerHTML="";
+memories.forEach((m,i)=>{
+const item=document.createElement("div");
+item.className="memory-item";
+item.innerHTML=`<img src="${m.image}"><div class="info"><strong></strong><small></small></div><button>Delete</button>`;
+item.querySelector("strong").textContent=m.title;
+item.querySelector("small").textContent=m.date||"Undated";
+item.querySelector("button").onclick=()=>{
+memories.splice(i,1);
+renderMemoryList();
+};
+list.appendChild(item);
+});
+}
+
+function getAlbumData(){
+return{
+recipient:$("recipient").value.trim(),
+sender:$("sender").value.trim(),
+title:$("albumTitle").value.trim()||"Our little memories",
+ending:$("ending").value.trim()||"Thank you for all the little moments ♡",
+memories:[...memories].sort((a,b)=>(a.date||"").localeCompare(b.date||""))
+};
+}
+
+function buildAlbum(data){
+album=data;
+currentPage=0;
+$("editor").classList.add("hidden");
+$("albumView").classList.remove("hidden");
+$("editBtn").classList.add("hidden");
+renderPage();
+window.scrollTo(0,0);
+}
+
+$("makeAlbum").onclick=()=>{
+if(!memories.length){
+alert("Tambahkan minimal satu kenangan ♡");
+return;
+}
+buildAlbum(getAlbumData());
+};
+
+function totalPages(){
+return album.memories.length+3;
+}
+
+/* PAGE CONTENT */
+
+function renderPage(animation=""){
+const page=$("page");
+if(!album)return;
+
+const n=totalPages();
+$("counter").textContent=`Page ${currentPage+1} / ${n}`;
+$("prev").disabled=currentPage===0;
+$("next").disabled=currentPage===n-1;
+
+if(currentPage===0){
+page.innerHTML=`
+<div class="cover">
+<div class="stamp">♡</div>
+<p>A little book of</p>
+<h1 id="coverTitle"></h1>
+<div class="to">Made especially for</div>
+<div class="names" id="coverRecipient"></div>
+<p style="margin-top:40px;font-size:16px">From <span id="coverSender"></span></p>
+<button class="openBook" id="openBook">Open album ♡</button>
+</div>
+<div class="page-num">♡</div>`;
+
+$("coverTitle").textContent=album.title;
+$("coverRecipient").textContent=album.recipient||"Someone special";
+$("coverSender").textContent=album.sender||"Someone";
+
+$("openBook").onclick=()=>turnPage(1);
+}
+else if(currentPage<=album.memories.length){
+const m=album.memories[currentPage-1];
+page.innerHTML=`
+<div class="page-inner memory-page">
+<div class="date" id="memDate"></div>
+<h2 id="memTitle"></h2>
+<img class="memory-photo" id="memPhoto">
+<div class="caption" id="memCaption"></div>
+</div>
+<div class="page-num">♡ ${currentPage} ♡</div>`;
+
+$("memDate").textContent=m.date||"A lovely day";
+$("memTitle").textContent=m.title;
+$("memPhoto").src=m.image;
+$("memCaption").textContent=m.caption||"";
+}
+else if(currentPage===album.memories.length+1){
+page.innerHTML=`
+<div class="page-inner timeline-page">
+<h2>Our timeline ♡</h2>
+<div class="timeline" id="timeline"></div>
+</div>
+<div class="page-num">♡</div>`;
+
+const timeline=$("timeline");
+album.memories.forEach(m=>{
+const item=document.createElement("div");
+item.className="tl-item";
+item.innerHTML=`<div class="tl-date"></div><div class="tl-title"></div><div class="tl-text"></div>`;
+item.querySelector(".tl-date").textContent=m.date||"A lovely day";
+item.querySelector(".tl-title").textContent=m.title;
+item.querySelector(".tl-text").textContent=m.caption||"";
+timeline.appendChild(item);
+});
+}
+else{
+page.innerHTML=`
+<div class="end-page">
+<div style="font-size:50px">♡</div>
+<h2>And the story continues...</h2>
+<p id="endText"></p>
+<div style="margin-top:30px;color:#b28b6b">With love,</div>
+<div style="font-family:'Playfair Display',serif;font-size:24px;margin-top:8px" id="endSender"></div>
+<div style="margin-top:40px">✿ &nbsp; ♡ &nbsp; ✿</div>
+</div>`;
+
+$("endText").textContent=album.ending;
+$("endSender").textContent=album.sender||"";
+}
+
+if(animation){
+page.classList.remove("arrive-next","arrive-prev");
+void page.offsetWidth;
+page.classList.add(animation);
+}
+}
+
+/* ANIMATED PAGE TURN */
+
+function turnPage(direction){
+if(busy||!album)return;
+if(direction===1&&currentPage>=totalPages()-1)return;
+if(direction===-1&&currentPage<=0)return;
+
+busy=true;
+const page=$("page");
+page.classList.remove("arrive-next","arrive-prev");
+void page.offsetWidth;
+
+page.classList.add(direction===1?"turn-next":"turn-prev");
+
+setTimeout(()=>{
+currentPage+=direction;
+page.classList.remove("turn-next","turn-prev");
+renderPage(direction===1?"arrive-next":"arrive-prev");
+busy=false;
+},520);
+}
+
+$("prev").onclick=()=>turnPage(-1);
+$("next").onclick=()=>turnPage(1);
+
+document.addEventListener("keydown",e=>{
+if($("albumView").classList.contains("hidden"))return;
+if(e.key==="ArrowRight")turnPage(1);
+if(e.key==="ArrowLeft")turnPage(-1);
+});
+
+/* SHARE LINK */
+
+function encodeAlbum(data){
+const str=JSON.stringify(data);
+const bytes=new TextEncoder().encode(str);
+let binary="";
+bytes.forEach(b=>binary+=String.fromCharCode(b));
+return btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+
+function decodeAlbum(s){
+s=s.replace(/-/g,"+").replace(/_/g,"/");
+while(s.length%4)s+="=";
+const binary=atob(s);
+const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function shareUrl(){
+return location.href.split("#")[0]+"#album="+encodeAlbum(album);
+}
+
+$("copyBtn").onclick=async()=>{
+const url=shareUrl();
+try{
+await navigator.clipboard.writeText(url);
+alert("Album link berhasil disalin ♡");
+}catch(e){
+prompt("Copy link album:",url);
+}
+};
+
+$("previewBtn").onclick=()=>{
+window.open(shareUrl(),"_blank");
+};
+
+$("editBtn").onclick=()=>{
+$("albumView").classList.add("hidden");
+$("editor").classList.remove("hidden");
+};
+
+$("anotherBtn").onclick=()=>{
+if(!confirm("Buat album baru?"))return;
+
+album=null;
+memories=[];
+$("recipient").value="";
+$("sender").value="";
+$("albumTitle").value="";
+$("ending").value="";
+$("memoryList").innerHTML='<p style="color:#a28b76;font-size:14px">Your memories will appear here.</p>';
+$("albumView").classList.add("hidden");
+$("editor").classList.remove("hidden");
+$("photo").value="";
+$("title").value="";
+$("date").value="";
+$("caption").value="";
+$("photoPreview").classList.add("hidden");
+location.hash="";
+stopMusic();
+window.scrollTo(0,0);
+};
+
+/* ORIGINAL INSTRUMENTAL */
+
+function playNote(freq,duration=0.28){
+if(!audioCtx)return;
+const osc=audioCtx.createOscillator();
+const gain=audioCtx.createGain();
+osc.type="sine";
+osc.frequency.value=freq;
+gain.gain.setValueAtTime(0.0001,audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.07,audioCtx.currentTime+0.03);
+gain.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+duration);
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+osc.start();
+osc.stop(audioCtx.currentTime+duration);
+}
+
+function playChord(notes){
+notes.forEach((f,i)=>{
+setTimeout(()=>playNote(f,0.8),i*35);
+});
+}
+
+function startMusic(){
+if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+if(audioCtx.state==="suspended")audioCtx.resume();
+
+musicPlaying=true;
+$("music").textContent="♫";
+
+musicTimer=setInterval(()=>{
+playNote(melody[melodyStep%melody.length],0.3);
+
+if(melodyStep%8===0){
+playChord(chords[Math.floor(melodyStep/8)%chords.length]);
+}
+melodyStep++;
+},300);
+}
+
+function stopMusic(){
+if(musicTimer)clearInterval(musicTimer);
+musicTimer=null;
+musicPlaying=false;
+$("music").textContent="♪";
+}
+
+$("music").onclick=()=>{
+if(musicPlaying)stopMusic();
+else startMusic();
+};
+
+/* SHARED ALBUM */
+
+function loadShared(){
+if(!location.hash.startsWith("#album="))return false;
+
+try{
+const data=decodeAlbum(location.hash.slice(7));
+if(!data||!Array.isArray(data.memories))throw new Error();
+buildAlbum(data);
+
+$("editBtn").classList.add("hidden");
+$("anotherBtn").classList.remove("hidden");
+$("copyBtn").classList.remove("hidden");
+$("previewBtn").classList.add("hidden");
+return true;
+}catch(e){
+alert("Album link tidak valid atau terlalu panjang.");
+return false;
+}
+}
+
+if(loadShared()){
+$("editor").classList.add("hidden");
+}
+
+</script>
+</body>
+</html>
